@@ -46,6 +46,6 @@ def meets_criteria2(number):
     return all(map(lambda c: c(number), criteria))
 
 
-# print(sum([meets_criteria1(number) for number in range(240920, 789857)]))
-# print(sum([meets_criteria2(number) for number in range(240920, 789857)]))
+print(sum([meets_criteria1(number) for number in range(240920, 789857)]))
+print(sum([meets_criteria2(number) for number in range(240920, 789857)]))
 
