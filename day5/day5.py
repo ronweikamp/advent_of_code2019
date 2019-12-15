@@ -1,15 +1,23 @@
 instructions = {
-    1: lambda code, x, y, i: code[:i] + [x + y] + code[i + 1:],
-    2: lambda code, x, y, i: code[:i] + [x * y] + code[i + 1:],
-    3: lambda code, x, i: code[:i] + [x] + code[i + 1:],
-    4: lambda code, x: [code[x]] + code[1:]
+    1: lambda code, index, x, y, i: (code[:i] + [x + y] + code[i + 1:], index + 4),
+    2: lambda code, index, x, y, i: (code[:i] + [x * y] + code[i + 1:], index + 4),
+    3: lambda code, index, x, i: (code[:i] + [x] + code[i + 1:], index + 2),
+    4: lambda code, index, x, _: ([x] + code[1:], index + 2),
+    5: lambda code, index, x, y, _: (code, y if x != 0 else index + 3),
+    6: lambda code, index, x, y, _: (code, y if x == 0 else index + 3),
+    7: lambda code, index, x, y, i: (code[:i] + [1] + code[i + 1:] if x < y else code[:i] + [0] + code[i + 1:], index + 4),
+    8: lambda code, index, x, y, i: (code[:i] + [1] + code[i + 1:] if x == y else code[:i] + [0] + code[i + 1:], index + 4)
 }
 
 opcode_to_numparams = {
     1: 2,
     2: 2,
     3: 1,
-    4: 0
+    4: 1,
+    5: 2,
+    6: 2,
+    7: 2,
+    8: 2
 }
 
 
@@ -21,13 +29,12 @@ def get_param(code, i, mode):
 
 
 def run(index, code):
-    print('index {}'.format(index))
     if code[index] == 99:
         return code
     elif code[index] == 3:
         number = int(input("Input number: "))
-        new_code = instructions[3](code, number, code[index + 1])
-        run(index + 2, new_code)
+        new_code, new_index = instructions[3](code, index, number, code[index + 1])
+        run(new_index, new_code)
     else:
         param_opcode = str(code[index]).zfill(5)
 
@@ -40,15 +47,12 @@ def run(index, code):
         params = [get_param(code, code[index + 1 + i], param_modes[i]) for i in range(numparams)]
 
         output_address = code[index + numparams + 1]
-
-        new_code = instructions[opcode](code, *params, output_address)
-        new_index = index + {1: 4, 2: 4, 3: 2, 4: 2}[opcode]
+        # print(opcode)
+        # print(param_opcode)
+        new_code, new_index = instructions[opcode](code, index, *params, output_address)
 
         if opcode == 4:
-            if param_modes[0]:
-                print('ime {}'.format(new_code[index + 1]))
-            else:
-                print(new_code[0])
+            print(new_code[0])
 
         return run(new_index, new_code)
 
@@ -84,3 +88,8 @@ run(0,
      224, 102, 2, 223, 223, 1005, 224, 659, 101, 1, 223, 223, 1008, 226, 226, 224, 102, 2, 223, 223, 1006, 224, 674,
      1001, 223, 1, 223, 4, 223, 99, 226
      ])
+# 11049715
+
+# print(run(0, [3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+#           1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+#           999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99]))
