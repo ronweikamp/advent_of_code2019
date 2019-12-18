@@ -2,22 +2,24 @@ instructions = {
     1: lambda code, index, x, y, i: (code[:i] + [x + y] + code[i + 1:], index + 4),
     2: lambda code, index, x, y, i: (code[:i] + [x * y] + code[i + 1:], index + 4),
     3: lambda code, index, x, i: (code[:i] + [x] + code[i + 1:], index + 2),
-    4: lambda code, index, x, _: ([x] + code[1:], index + 2),
-    5: lambda code, index, x, y, _: (code, y if x != 0 else index + 3),
-    6: lambda code, index, x, y, _: (code, y if x == 0 else index + 3),
-    7: lambda code, index, x, y, i: (code[:i] + [1] + code[i + 1:] if x < y else code[:i] + [0] + code[i + 1:], index + 4),
-    8: lambda code, index, x, y, i: (code[:i] + [1] + code[i + 1:] if x == y else code[:i] + [0] + code[i + 1:], index + 4)
+    4: lambda code, index, x: ([x] + code[1:], index + 2),
+    5: lambda code, index, x, y: (code, y if x != 0 else index + 3),
+    6: lambda code, index, x, y: (code, y if x == 0 else index + 3),
+    7: lambda code, index, x, y, i: (
+    code[:i] + [1] + code[i + 1:] if x < y else code[:i] + [0] + code[i + 1:], index + 4),
+    8: lambda code, index, x, y, i: (
+    code[:i] + [1] + code[i + 1:] if x == y else code[:i] + [0] + code[i + 1:], index + 4)
 }
 
 opcode_to_numparams = {
-    1: 2,
-    2: 2,
-    3: 1,
+    1: 3,
+    2: 3,
+    3: 2,
     4: 1,
     5: 2,
     6: 2,
-    7: 2,
-    8: 2
+    7: 3,
+    8: 3
 }
 
 
@@ -46,10 +48,14 @@ def run(index, code):
 
         params = [get_param(code, code[index + 1 + i], param_modes[i]) for i in range(numparams)]
 
-        output_address = code[index + numparams + 1]
+        # in last is address, consider raw address
+        if opcode in {1, 2, 3, 7, 8}:
+            output_address = code[index + numparams]
+            params[-1] = output_address
+
         # print(opcode)
         # print(param_opcode)
-        new_code, new_index = instructions[opcode](code, index, *params, output_address)
+        new_code, new_index = instructions[opcode](code, index, *params)
 
         if opcode == 4:
             print(new_code[0])
