@@ -30,12 +30,19 @@ def get_param(code, i, mode):
         return code[i]
 
 
-def run(index, code, inputs=[]):
+def run(index, code, inputs=[], halt_at_out=False):
+    # print('index {}'.format(index))
     if code[index] == 99:
-        return code, code[0]
+        return code, code[0], index, 0
     elif code[index] == 3:
-        number = inputs.pop(0) if len(inputs) > 0 else int(input("Input number: "))
+
+        if len(inputs) == 0:
+            return code, code[0], index, 1
+
+        number = inputs.pop(0)
+
         new_code, new_index = instructions[3](code, index, number, code[index + 1])
+
         return run(new_index, new_code, inputs)
     else:
         param_opcode = str(code[index]).zfill(5)
@@ -57,8 +64,9 @@ def run(index, code, inputs=[]):
         # print(param_opcode)
         new_code, new_index = instructions[opcode](code, index, *params)
 
-        if opcode == 4:
-            print(new_code[0])
+        if opcode == 4 and halt_at_out:
+            print('output {}'.format(new_code[0]))
+            return new_code, new_code[0], new_index, 2
 
         return run(new_index, new_code, inputs)
 
