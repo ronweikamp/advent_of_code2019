@@ -1,14 +1,15 @@
 instructions = {
-    1: lambda code, index, x, y, i: (code[:i] + [x + y] + code[i + 1:], index + 4),
-    2: lambda code, index, x, y, i: (code[:i] + [x * y] + code[i + 1:], index + 4),
-    3: lambda code, index, x, i: (code[:i] + [x] + code[i + 1:], index + 2),
-    4: lambda code, index, x: ([x] + code[1:], index + 2),
-    5: lambda code, index, x, y: (code, y if x != 0 else index + 3),
-    6: lambda code, index, x, y: (code, y if x == 0 else index + 3),
-    7: lambda code, index, x, y, i: (
-    code[:i] + [1] + code[i + 1:] if x < y else code[:i] + [0] + code[i + 1:], index + 4),
-    8: lambda code, index, x, y, i: (
-    code[:i] + [1] + code[i + 1:] if x == y else code[:i] + [0] + code[i + 1:], index + 4)
+    1: lambda code, index, relative_base, x, y, i: (code[:i] + [x + y] + code[i + 1:], index + 4, relative_base),
+    2: lambda code, index, relative_base, x, y, i: (code[:i] + [x * y] + code[i + 1:], index + 4, relative_base),
+    3: lambda code, index, relative_base, x, i: (code[:i] + [x] + code[i + 1:], index + 2, relative_base),
+    4: lambda code, index, relative_base, x: ([x] + code[1:], index + 2, relative_base),
+    5: lambda code, index, relative_base, x, y: (code, y if x != 0 else index + 3, relative_base),
+    6: lambda code, index, relative_base, x, y: (code, y if x == 0 else index + 3, relative_base),
+    7: lambda code, index, relative_base, x, y, i: (
+    code[:i] + [1] + code[i + 1:] if x < y else code[:i] + [0] + code[i + 1:], index + 4, relative_base),
+    8: lambda code, index, relative_base, x, y, i: (
+    code[:i] + [1] + code[i + 1:] if x == y else code[:i] + [0] + code[i + 1:], index + 4, relative_base),
+    9: lambda code, index, relative_base, x: (code, index, relative_base + x)
 }
 
 opcode_to_numparams = {
@@ -19,18 +20,21 @@ opcode_to_numparams = {
     5: 2,
     6: 2,
     7: 3,
-    8: 3
+    8: 3,
+    9: 1
 }
 
 
-def get_param(code, i, mode):
-    if mode:  # 1 for immediate mode
+def get_param(code, i, mode, relative_base):
+    if mode == 1:  # 1 for immediate mode
         return i
-    else:
+    elif mode == 2:  # relative mode
+        return code[i + relative_base]
+    else:  # position mode
         return code[i]
 
 
-def run(index, code, inputs=[], halt_at_out=False):
+def run(index, code, inputs=[], halt_at_out=False, relative_base=0):
     # print('index {}'.format(index))
     if code[index] == 99:
         return code, code[0], index, 0
@@ -39,11 +43,9 @@ def run(index, code, inputs=[], halt_at_out=False):
         if len(inputs) == 0:
             return code, code[0], index, 1
 
-        number = inputs.pop(0)
+        new_code, new_index, relative_base = instructions[3](code, index, relative_base, inputs.pop(0), code[index + 1])
 
-        new_code, new_index = instructions[3](code, index, number, code[index + 1])
-
-        return run(new_index, new_code, inputs)
+        return run(new_index, new_code, inputs, halt_at_out, relative_base)
     else:
         param_opcode = str(code[index]).zfill(5)
 
@@ -53,7 +55,7 @@ def run(index, code, inputs=[], halt_at_out=False):
 
         numparams = opcode_to_numparams[opcode]
 
-        params = [get_param(code, code[index + 1 + i], param_modes[i]) for i in range(numparams)]
+        params = [get_param(code, code[index + 1 + i], param_modes[i], relative_base) for i in range(numparams)]
 
         # in last is address, consider raw address
         if opcode in {1, 2, 3, 7, 8}:
@@ -62,13 +64,13 @@ def run(index, code, inputs=[], halt_at_out=False):
 
         # print(opcode)
         # print(param_opcode)
-        new_code, new_index = instructions[opcode](code, index, *params)
+        new_code, new_index, new_relative_base = instructions[opcode](code, index, relative_base, *params)
 
         if opcode == 4 and halt_at_out:
             print('output {}'.format(new_code[0]))
             return new_code, new_code[0], new_index, 2
 
-        return run(new_index, new_code, inputs)
+        return run(new_index, new_code, inputs, halt_at_out, relative_base)
 
 
 def main():

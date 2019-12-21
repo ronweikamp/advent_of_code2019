@@ -2,8 +2,9 @@ from day5 import run
 import itertools
 
 def get_init_state():
-    for line in open('input', 'r'):
-        return [int(l) for l in line.split(',')]
+    with open('input', 'r') as f:
+        for line in f:
+            return [int(l) for l in line.split(',')]
 
 
 def run_phase_setting(code, phase_settings):
