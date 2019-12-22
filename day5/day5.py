@@ -2,14 +2,14 @@ instructions = {
     1: lambda code, index, relative_base, x, y, i: (code[:i] + [x + y] + code[i + 1:], index + 4, relative_base),
     2: lambda code, index, relative_base, x, y, i: (code[:i] + [x * y] + code[i + 1:], index + 4, relative_base),
     3: lambda code, index, relative_base, x, i: (code[:i] + [x] + code[i + 1:], index + 2, relative_base),
-    4: lambda code, index, relative_base, x: ([x] + code[1:], index + 2, relative_base),
+    4: lambda code, index, relative_base, x: (code, index + 2, relative_base),
     5: lambda code, index, relative_base, x, y: (code, y if x != 0 else index + 3, relative_base),
     6: lambda code, index, relative_base, x, y: (code, y if x == 0 else index + 3, relative_base),
     7: lambda code, index, relative_base, x, y, i: (
     code[:i] + [1] + code[i + 1:] if x < y else code[:i] + [0] + code[i + 1:], index + 4, relative_base),
     8: lambda code, index, relative_base, x, y, i: (
     code[:i] + [1] + code[i + 1:] if x == y else code[:i] + [0] + code[i + 1:], index + 4, relative_base),
-    9: lambda code, index, relative_base, x: (code, index, relative_base + x)
+    9: lambda code, index, relative_base, x: (code, index + 2, relative_base + x)
 }
 
 opcode_to_numparams = {
@@ -34,18 +34,32 @@ def get_param(code, i, mode, relative_base):
         return code[i]
 
 
-def run(index, code, inputs=[], halt_at_out=False, relative_base=0):
+def run_until_halt(index, code, inputs=[]):
+    g = run(index, code, inputs)
+    return [r for r in g][-1]
+
+
+def run_until_halt_last_out(code, inputs=[]):
+    return run_get_outs(code, inputs=inputs)[-1]
+
+
+def run_get_outs(code, inputs=[]):
+    g = run(0, code, inputs=inputs)
+    return [r[1] for r in g if r[-1] == 2]
+
+
+def run(index, code, inputs=[], relative_base=0):
     # print('index {}'.format(index))
     if code[index] == 99:
-        return code, code[0], index, 0
+        yield code, code[0], index, 0
     elif code[index] == 3:
 
         if len(inputs) == 0:
-            return code, code[0], index, 1
+            yield code, code[0], index, 1
 
         new_code, new_index, relative_base = instructions[3](code, index, relative_base, inputs.pop(0), code[index + 1])
 
-        return run(new_index, new_code, inputs, halt_at_out, relative_base)
+        yield from run(new_index, new_code, inputs, relative_base)
     else:
         param_opcode = str(code[index]).zfill(5)
 
@@ -66,11 +80,10 @@ def run(index, code, inputs=[], halt_at_out=False, relative_base=0):
         # print(param_opcode)
         new_code, new_index, new_relative_base = instructions[opcode](code, index, relative_base, *params)
 
-        if opcode == 4 and halt_at_out:
-            print('output {}'.format(new_code[0]))
-            return new_code, new_code[0], new_index, 2
+        if opcode == 4:
+            yield new_code, params[0], new_index, 2
 
-        return run(new_index, new_code, inputs, halt_at_out, relative_base)
+        yield from run(new_index, new_code, inputs, new_relative_base)
 
 
 def main():
