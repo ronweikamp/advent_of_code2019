@@ -17,6 +17,9 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual([1125899906842624], run_with_mem([104, 1125899906842624, 99]))
 
-
-    def part_1(self):
+    def testcases_part_1(self):
         self.assertEqual([3345854957], run_with_mem(get_init_state(), inputs=[1]))
+
+
+    def testcases_part_2(self):
+        self.assertEqual([68938], run_with_mem(get_init_state(), inputs=[2]))

@@ -51,42 +51,37 @@ def run_get_outs(code, inputs=[]):
 
 def run(index, code, inputs=[], relative_base=0):
 
-    param_opcode = str(code[index]).zfill(5)
+    while True:
 
-    opcode = int(param_opcode[-2:])
+        param_opcode = str(code[index]).zfill(5)
+        opcode = int(param_opcode[-2:])
+        param_modes = [int(m) for m in reversed(param_opcode[:3])]
+        numparams = opcode_to_numparams[opcode]
+        params = [get_param(code, code[index + 1 + i], param_modes[i], relative_base) for i in range(numparams)]
 
-    param_modes = [int(m) for m in reversed(param_opcode[:3])]
+        if opcode == 99:
+            yield code, code[0], index, 0
+            return
+        elif opcode == 3:
 
-    numparams = opcode_to_numparams[opcode]
+            if len(inputs) == 0:
+                yield code, code[0], index, 1
 
-    params = [get_param(code, code[index + 1 + i], param_modes[i], relative_base) for i in range(numparams)]
+            destination = code[index + 1] + relative_base if param_modes[0] == 2 else code[index + 1]
+            code, index, relative_base = instructions[3](code, index, relative_base, inputs.pop(0), destination)
+        else:
 
-    if opcode == 99:
-        yield code, code[0], index, 0
-    elif opcode == 3:
+            # if last is address, consider raw address
+            if opcode in {1, 2, 3, 7, 8}:
+                output_address = code[index + numparams]
+                params[-1] = output_address + relative_base if param_modes[-1] == 2 else output_address
 
-        if len(inputs) == 0:
-            yield code, code[0], index, 1
+            # print(opcode)
+            # print(param_opcode)
+            code, index, relative_base = instructions[opcode](code, index, relative_base, *params)
 
-        destination = code[index + 1] + relative_base if param_modes[0] == 2 else code[index + 1]
-        new_code, new_index, relative_base = instructions[3](code, index, relative_base, inputs.pop(0), destination)
-
-        yield from run(new_index, new_code, inputs, relative_base)
-    else:
-
-        # if last is address, consider raw address
-        if opcode in {1, 2, 3, 7, 8}:
-            output_address = code[index + numparams]
-            params[-1] = output_address + relative_base if param_modes[-1] == 2 else output_address
-
-        # print(opcode)
-        # print(param_opcode)
-        new_code, new_index, new_relative_base = instructions[opcode](code, index, relative_base, *params)
-
-        if opcode == 4:
-            yield new_code, params[0], new_index, 2
-
-        yield from run(new_index, new_code, inputs, new_relative_base)
+            if opcode == 4:
+                yield code, params[0], index, 2
 
 
 def main():
