@@ -1,10 +1,12 @@
 from day5 import run_get_outs
 
 
-def run_with_mem(code):
-    return run_get_outs(code + [0 for _ in range(1000)])
+def get_init_state():
+    with open('input', 'r') as f:
+        for line in f:
+            return [int(l) for l in line.split(',')]
 
 
-x = run_with_mem([109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99])
+def run_with_mem(code, inputs=[]):
 
-print(x)
+    return run_get_outs(code + [0 for _ in range(1000)], inputs=inputs)

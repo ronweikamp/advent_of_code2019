@@ -15,13 +15,14 @@ instructions = {
 opcode_to_numparams = {
     1: 3,
     2: 3,
-    3: 2,
+    3: 1,
     4: 1,
     5: 2,
     6: 2,
     7: 3,
     8: 3,
-    9: 1
+    9: 1,
+    99: 0
 }
 
 
@@ -49,32 +50,34 @@ def run_get_outs(code, inputs=[]):
 
 
 def run(index, code, inputs=[], relative_base=0):
-    # print('index {}'.format(index))
-    if code[index] == 99:
+
+    param_opcode = str(code[index]).zfill(5)
+
+    opcode = int(param_opcode[-2:])
+
+    param_modes = [int(m) for m in reversed(param_opcode[:3])]
+
+    numparams = opcode_to_numparams[opcode]
+
+    params = [get_param(code, code[index + 1 + i], param_modes[i], relative_base) for i in range(numparams)]
+
+    if opcode == 99:
         yield code, code[0], index, 0
-    elif code[index] == 3:
+    elif opcode == 3:
 
         if len(inputs) == 0:
             yield code, code[0], index, 1
 
-        new_code, new_index, relative_base = instructions[3](code, index, relative_base, inputs.pop(0), code[index + 1])
+        destination = code[index + 1] + relative_base if param_modes[0] == 2 else code[index + 1]
+        new_code, new_index, relative_base = instructions[3](code, index, relative_base, inputs.pop(0), destination)
 
         yield from run(new_index, new_code, inputs, relative_base)
     else:
-        param_opcode = str(code[index]).zfill(5)
 
-        opcode = int(param_opcode[-2:])
-
-        param_modes = [int(m) for m in reversed(param_opcode[:3])]
-
-        numparams = opcode_to_numparams[opcode]
-
-        params = [get_param(code, code[index + 1 + i], param_modes[i], relative_base) for i in range(numparams)]
-
-        # in last is address, consider raw address
+        # if last is address, consider raw address
         if opcode in {1, 2, 3, 7, 8}:
             output_address = code[index + numparams]
-            params[-1] = output_address
+            params[-1] = output_address + relative_base if param_modes[-1] == 2 else output_address
 
         # print(opcode)
         # print(param_opcode)
