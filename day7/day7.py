@@ -12,7 +12,7 @@ def run_phase_setting(code, phase_settings):
     input_output = 0
 
     for p in phase_settings:
-        _, input_output, _, _ = next(run(0, code, inputs=[p, input_output]))
+        _, input_output, _, _, _ = next(run(0, code, inputs=[p, input_output]))
 
     return input_output
 
@@ -41,7 +41,7 @@ def run_feedbackloop_setting(code, phase_settings):
 
     for i in range(5):
         print('amp {} phase {}'.format(i, phase_settings[i]))
-        amps[i], input_output, indices[i], reason = next(run(indices[i], amps[i], inputs=[phase_settings[i]]))
+        amps[i], input_output, indices[i], _, reason = next(run(indices[i], amps[i], inputs=[phase_settings[i]]))
         print('out {} reason {}'.format(input_output, reason))
 
     not_halted = True
@@ -50,7 +50,7 @@ def run_feedbackloop_setting(code, phase_settings):
 
     while not_halted:
         for i in range(5):
-            amps[i], new_input_output, indices[i], reason = next(run(indices[i], amps[i], inputs=[input_output]))
+            amps[i], new_input_output, indices[i], _, reason = next(run(indices[i], amps[i], inputs=[input_output]))
             print('out {} reason {}'.format(input_output, reason))
 
             not_halted = reason is not 0

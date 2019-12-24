@@ -60,12 +60,12 @@ def run(index, code, inputs=[], relative_base=0):
         params = [get_param(code, code[index + 1 + i], param_modes[i], relative_base) for i in range(numparams)]
 
         if opcode == 99:
-            yield code, code[0], index, 0
+            yield code, code[0], index, relative_base, 0
             return
         elif opcode == 3:
 
             if len(inputs) == 0:
-                yield code, code[0], index, 1
+                yield code, code[0], index, relative_base, 1
 
             destination = code[index + 1] + relative_base if param_modes[0] == 2 else code[index + 1]
             code, index, relative_base = instructions[3](code, index, relative_base, inputs.pop(0), destination)
@@ -81,7 +81,7 @@ def run(index, code, inputs=[], relative_base=0):
             code, index, relative_base = instructions[opcode](code, index, relative_base, *params)
 
             if opcode == 4:
-                yield code, params[0], index, 2
+                yield code, params[0], index, relative_base, 2
 
 
 def main():
