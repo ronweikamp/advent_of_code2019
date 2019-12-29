@@ -131,6 +131,13 @@ def min_ORE_needed(reaction_list, fuel):
 
 
 s = time.time()
-# print(min_ORE_needed_search('test_input', 1))
-print(min_ORE_needed(get_init_state('input'), 1))
+
+f = 3343440
+a= -6830366337
+while a < 0:
+    f += 1
+    a = (min_ORE_needed(get_init_state('input'), f) - 1000000000000)
+    print(f)
+
 print(time.time() - s)
+print(min_ORE_needed(get_init_state('input'), 3343477) - 1000000000000)
